@@ -1,0 +1,124 @@
+(*Jelena Glišić, MA2-EN, 89191008*) 
+
+
+(*Lights Out*)
+
+let flip mat i j= let r= Array.length mat in let c= Array.length mat.(0) in
+    for a=1 to r do
+        for b=1 to c do
+            if (a=i && b=j) || (a=i && b=(j-1)) || (a=i && b=(j+1)) || (a=(i-1) && b=j) || (a=(i+1) && b=j) then
+                mat.(a-1).(b-1)<-(not (Array.get (Array.get mat (a-1)) (b-1)));done;done;
+    mat;;
+    
+let print_matrix mat= let r= Array.length mat in let c= Array.length mat.(0) in
+    for a=1 to r do
+        for b=1 to c do
+            if (Array.get (Array.get mat (a-1)) (b-1)) then
+                print_string("T")
+            else print_string("F");done;
+        print_string("\n");done;; 
+
+let matrix= [|[|false; true; true; false|];[|true; false; false; true|];[|false; false; true; true|]|];;
+print_matrix matrix;;
+flip matrix 1 4;;
+print_matrix matrix;;
+
+
+(*Sliding Tiles*)
+
+type slidingTile= {mutable table:char array array; mutable x:int; mutable y:int};;
+
+let slide tile a b= let dim1=Array.length tile.table in let dim2=Array.length tile.table.(0) in let x=tile.x in let y=tile.y in
+    if a>=1 && a<=dim1 && b>=1 && b<=dim2 && ((a=(x-1) && b=y) || (a=(x-1) && b=y) || (a=x && b=(y-1)) || (a=x && b=(y+1))) then
+            ((tile.x<-a;tile.y<-b);
+            let c=tile.table.(a-1).(b-1) in 
+            tile.table.(a-1).(b-1)<-' '; tile.table.(x-1).(y-1)<-c);
+    tile;;
+    
+let print_tile tile= let dim1=Array.length tile.table in let dim2=Array.length tile.table.(0) in let x=tile.x in let y=tile.y in
+    for i=1 to dim1 do
+        for j=1 to dim2 do
+            if (i=x) && (j=y) then
+                print_char(' ')
+            else print_char(tile.table.(i-1).(j-1));done;
+        print_string("\n");done;;
+        
+let a= {table=[|[|'1';'2';'3'|];[|'4';'5';'6'|];[|'7';'8';' '|]|];x=3;y=3};;
+print_tile a;;
+slide a 2 2;;
+print_tile a;;
+slide a 3 2;;
+print_tile a;;
+slide a 2 2;;
+print_tile a;;
+
+
+(*Briscola*)
+
+type suit = Sword | Cup | Club | Coin;;
+
+type briscola = King of suit | Rider of suit | Jack of suit | Number of int*suit;;
+
+let points card= match card with
+    |Number (1,_) -> 11
+    |Number (3,_) -> 10
+    |King _ -> 4
+    |Rider _ -> 3
+    |Jack _ -> 2
+    |_ -> 0;;
+    
+let color card= match card with
+    |Number (n,s) -> s
+    |King s -> s
+    |Rider s -> s
+    |Jack s -> s;;
+    
+let higherfigure c1 c2= let p1=points c1 in let p2= points c2 in match (c1,c2) with
+    |(Number (a,s),Number (b,t)) when p1=0 && p2=0 -> a>=b
+    |_ -> p1>=p2;;
+
+let highercard trumpsuit card1 card2= 
+    if (color card2)=trumpsuit && (color card1)<>trumpsuit then false
+    else if (color card2)=(color card1) then (higherfigure card1 card2)
+    else true;;
+
+points (Number (1,Club));;
+points (Jack Sword);;
+color (Jack Sword);;
+higherfigure (King Coin) (Rider Cup);;
+highercard Cup (King Coin) (Rider Cup);;
+highercard Sword (Number (7,Club)) (Number (3,Club));;
+highercard Club (Number (1,Club)) (Number (6,Club)) ;;
+
+
+(*Challenge*)
+
+let play trumpsuit player1card player2card player3card player4card =
+    let higherfigure2 c1 c2 = let p1= points c1 in let p2= points c2 in match (c1,c2) with
+        |(Number (a,s), Number (b,t)) when p1=0 && p2=0 && a>=b -> c1
+        |(Number (a,s), Number (b,t)) when p1=0 && p2=0 -> c2
+        |_ when p1>=p2 ->c1
+        |_ -> c2 in
+    let highestofsuit suit lst =
+        let new_lst= List.filter (fun a->(color a)=suit) lst in
+            List.fold_right higherfigure2 new_lst (Number (2,suit)) in
+    let index_of e l = 
+        let rec index_rec i lst= match lst with
+            | [] -> 0
+            | hd::tl -> if hd = e then i else index_rec (i+1) tl in
+        index_rec 0 l in
+    let cards= [player1card; player2card; player3card; player4card] in 
+    let suits= List.map color cards in 
+    if List.mem trumpsuit suits then
+        let winner= index_of (highestofsuit trumpsuit cards) cards in
+            if (winner mod 2)=0 then ("Team1",(points player1card)+(points player3card))
+            else ("Team2",(points player2card)+(points player4card));
+    else let winner= index_of (highestofsuit (List.hd suits) cards) cards in
+        if (winner mod 2)=0 then ("Team1",(points player1card)+(points player3card))
+        else ("Team2",(points player2card)+(points player4card));;
+        
+
+play Cup (Number (4,Club)) (Rider Club) (Number (7,Coin)) (Number (1, Cup));;
+play Sword (Number (4,Club)) (Number (3,Club)) (Number (7,Coin)) (Number (1, Cup));;
+play Sword (Number (4,Club)) (Number (7,Coin)) (Rider Club) (Number (1, Cup));;
+play Club (Number (2,Coin)) (Number (4,Club)) (Jack Club) (Number (6, Cup));;

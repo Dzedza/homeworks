@@ -1,0 +1,42 @@
+(*Jelena Glišić, MA2-EN, 89191008*) 
+
+
+let rec prime_separator l=
+    let is_prime n =
+        let rec check_div x d = match d with
+            | 1 -> true    
+            | _ -> (x mod d <> 0) && check_div x (d-1)
+        in match n with
+        | 0 | 1 -> false
+        | _ -> check_div n (n-1)
+    in match l with
+    |[] -> ([],[])
+    |h::t -> let (prev1,prev2) = prime_separator t in
+        if (is_prime h) then (prev1 @ [h],prev2)
+        else (prev1,prev2 @ [h]);;
+        
+prime_separator [1; 2; 3; 4; 5; 6; 7; 8; 9; 10; 11];;
+
+
+let nextpascalrow row=
+    let rec sumsoftwo l= match l with
+        |[] -> []
+        |h::[] -> []
+        |h::b::t -> (h+b)::sumsoftwo(b::t)
+    in match row with
+    |[] -> [1]
+    |_ -> [1] @ sumsoftwo(row) @ [1];;
+    
+nextpascalrow [1; 6; 15; 20; 15; 6; 1];;
+ 
+ 
+let listdiff l1 l2=
+    List.filter (fun a->(not (List.mem a l2))) l1;;
+    
+listdiff [1;2;2;6;3;9;1;4;6] [2;3];;
+    
+    
+let cart_fun f l1 l2=
+    List.concat (List.map (fun a -> List.map (fun b -> f a b) l2) l1);;
+    
+cart_fun ( * ) [1;2;2;6;3;9;1] [2;3];;
